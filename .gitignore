@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+results/
+results_*/
+*.png
+*.json
+.env
+.idea/
+.vscode/
