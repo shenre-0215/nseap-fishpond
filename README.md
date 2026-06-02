@@ -45,7 +45,7 @@ python main_ablation2.py --runs 200
 - 神经符号AI的"本体从哪来"（小网动态生长）
 - 安全RL的"未知环境安全探索"（拓扑闭环验证）
 
-详情见 [direction-analysis.md](direction-analysis.md) 和 [paper-v2.md](paper-v2.md)
+详情见 [paper-v2.md](paper-v2.md)
 
 ---
 
