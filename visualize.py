@@ -19,6 +19,9 @@ def plot_comparison(
         "Conservative": "#3498DB",
         "QLearning": "#F39C12",
         "NSEAP": "#27AE60",
+        "NSEAP-Static": "#8E44AD",
+        "NSEAP-NoSusp": "#E67E22",
+        "NSEAP-NoClose": "#1ABC9C",
     }
 
     # 面板 1：单次运行的种群数量曲线
@@ -51,7 +54,9 @@ def plot_comparison(
     ax = axes[1, 0]
     survival_data = []
     labels = []
-    for name in ["Greedy", "Conservative", "QLearning", "NSEAP"]:
+    for name in results:
+        if name not in colors:
+            continue
         runs_list = results.get(name, [])
         survival_data.append([r.cycles_survived for r in runs_list])
         labels.append(name)
@@ -65,7 +70,9 @@ def plot_comparison(
 
     # 面板 4：崩溃率 vs 平均累计捕捞量（散点图）
     ax = axes[1, 1]
-    for name in ["Greedy", "Conservative", "QLearning", "NSEAP"]:
+    for name in results:
+        if name not in colors:
+            continue
         runs_list = results.get(name, [])
         collapse_rate = sum(1 for r in runs_list if r.collapsed) / len(runs_list) * 100
         avg_harvest = sum(r.total_harvested for r in runs_list) / len(runs_list)
