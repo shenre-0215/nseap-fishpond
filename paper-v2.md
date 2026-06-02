@@ -1,4 +1,4 @@
-# NSEAP: Dynamic Ontology Growth and Safe Exploration via Suspension-Closure Architecture
+# Suspension Layer and Small Web: Dynamic Ontology Growth and Safe Exploration for Neural-Symbolic AI
 
 **Author:** shen
 **Affiliation:** Zhengzhou Sias University, Zhengzhou, China
@@ -11,7 +11,7 @@
 > **Open Problem 1 (Neural-Symbolic AI):** Where does symbolic knowledge come from? Existing neural-symbolic systems rely almost entirely on human-predefined ontologies, yet in open environments, experts cannot anticipate all possible states and relations.
 > **Open Problem 2 (Safe RL):** How can an agent explore safely in environments with unknown critical thresholds? Current safe RL methods require pre-specified safety constraints, but in complex systems (ecosystems, power grids, financial markets), critical boundaries are often unknown a priori.
 >
-> **Method:** We propose NSEAP (Neural-Symbolic Evolutionary Agent Platform), a novel agent architecture that addresses both problems simultaneously through three coupled components: (1) a **Suspension Layer** that inserts an architectural pause between perception and reasoning, stripping away preset labels and extracting only neutral attributes; (2) a **Small Web**—a dynamically growing relational graph where nodes represent state intervals and edges represent action-induced transitions, with knowledge growing online through interaction rather than being predefined; (3) a **Practical Closure** mechanism that validates safety topologically: only paths that can loop back to known-safe nodes within finite steps are solidified as knowledge.
+> **Method:** We contribute two novel components to the Neural-Symbolic Evolutionary Agent Platform (NSEAP): (1) a **Suspension Layer**—an architectural pause inserted between perception and reasoning, stripping away preset labels and extracting only neutral attributes; (2) a **Small Web**—a dynamically growing relational graph where nodes represent state intervals and edges represent action-induced transitions, with knowledge growing online through interaction rather than being predefined. These are coupled with a (3) **Practical Closure** mechanism that validates safety topologically: only paths that can loop back to known-safe nodes within finite steps are solidified as knowledge.
 >
 > **Results:** On a fish pond ecological management benchmark with an unknown collapse threshold, NSEAP achieves **0% collapse rate** over 100 independent runs while harvesting **30.6% more** than a conservative fixed strategy—without any predefined safety constraints. Q-Learning collapses 50% of the time. Ablation studies confirm that the dynamic ontology growth mechanism is essential: a variant with a static predefined ontology is completely paralyzed—achieving 0% collapse but 0 harvest across all runs—demonstrating that predefined ontologies are not merely imprecise but structurally incapable of supporting exploration.
 >
@@ -31,7 +31,7 @@ Two fundamental open problems persist across multiple subfields of AI:
 
 These two problems, though studied in separate communities, share a deep structural similarity: both stem from the impossibility of fully pre-specifying knowledge before interaction begins. Whether it's an ontology of concepts or a set of safety constraints, the world is richer than our anticipations.
 
-This paper proposes **NSEAP (Neural-Symbolic Evolutionary Agent Platform)**, a single architecture that addresses both problems through three coupled components:
+This paper contributes two novel mechanisms to the neural-symbolic agent architecture: (1) a **Suspension Layer** and (2) a **Small Web**—a dynamically growing relational graph—integrated with (3) **Practical Closure** for topological safety verification. We implement these within the Neural-Symbolic Evolutionary Agent Platform (NSEAP) framework.
 
 1. **Suspension Layer:** An architectural pause inserted between perception and reasoning. Instead of immediately mapping stimuli to responses (or observations to actions), the suspension layer strips away preset labels, extracts only neutral attributes (quantity, trend, uncertainty, distance to known boundaries), and delegates decision authority to the reasoning layer.
 
@@ -124,11 +124,11 @@ However, NSEAP makes a key practical advance: while active inference implementat
 
 ---
 
-## 3 NSEAP Architecture
+## 3 Architecture: Suspension Layer + Small Web within NSEAP
 
 ### 3.1 Design Principles
 
-NSEAP is built on three principles that distinguish it from both standard RL and standard neural-symbolic systems:
+NSEAP is built on three principles that distinguish it from both standard RL and standard neural-symbolic systems. The Suspension Layer and Small Web are the novel contributions; they are integrated into the NSEAP framework with Practical Closure.
 
 1. **Suspend judgment, delay ontological commitment.** Do not immediately classify an observation as "good" or "bad." Extract neutral attributes first, then reason. This prevents premature labeling from contaminating the reasoning process.
 
@@ -448,7 +448,7 @@ NSEAP's suspension layer is an attempt to insert a **different computational mod
 
 ## 7 Conclusion
 
-This paper presented NSEAP, an agent architecture that addresses two open problems simultaneously: (1) how symbolic ontologies can grow from interaction rather than expert prescription (the neural-symbolic AI ontology problem), and (2) how agents can explore safely without predefined safety constraints (the safe RL exploration problem).
+This paper presented the Suspension Layer and Small Web—two novel mechanisms integrated into the NSEAP framework—that together address two open problems simultaneously: (1) how symbolic ontologies can grow from interaction rather than expert prescription (the neural-symbolic AI ontology problem), and (2) how agents can explore safely without predefined safety constraints (the safe RL exploration problem).
 
 The architecture couples three components—a suspension layer for architectural pause, a dynamically growing relational graph (Small Web), and topological closure detection for safety verification—into a single integrated system.
 

@@ -2,8 +2,9 @@
 
 ## 项目概述
 
-- **项目名称**：NSEAP (Neural-Symbolic Evolutionary Agent Platform) 原型验证
-- **原创理论**：shen (郑州西亚斯学院)
+- **项目名称**：悬置层与小网原型验证（基于 NSEAP 平台）
+- **原创理论**：悬置层 + 小网 —— shen (郑州西亚斯学院)
+- **平台框架**：NSEAP (Neural-Symbolic Evolutionary Agent Platform)
 - **实现协助**：Claude Code
 - **GitHub 仓库**：https://github.com/shenre-0215/nseap-fishpond
 - **完成时间**：2026-06-01

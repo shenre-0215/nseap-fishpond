@@ -1,6 +1,6 @@
-# NSEAP: Neural-Symbolic Evolutionary Agent Platform
+# Suspension Layer + Small Web: Dynamic Ontology Growth for Safe AI
 
-> 神经符号进化智能体平台 —— 复杂系统中自主学习进化的智能体验证实验
+> 悬置层与小网——基于 NSEAP 平台的动态本体生长与安全探索验证实验
 
 ## 🔥 v2 Update (2026-06-02)
 
@@ -300,6 +300,6 @@ MIT
 
 ## 作者
 
-Original NSEAP theory: [shen](https://github.com/shenre-0215)
+**悬置层与小网理论原创**: [shen](https://github.com/shenre-0215)
 
-Experiment implementation: Claude Code
+平台实现（基于 NSEAP 框架）与实验: Claude Code
