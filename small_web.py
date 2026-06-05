@@ -1,17 +1,19 @@
-"""小网（Small Web）— 可闭环、自洽、可映射的关系图。
+"""Small Web - a relation-prioritized dynamic ontology.
 
-节点 = 状态区域（如 "low": [100, 300]）
-边   = 行动导致的状态转移，附带概率和置信度
+Nodes = state intervals (e.g. "low": [100, 300])
+Edges = action-induced state transitions with probability and confidence
 
-核心机制：
-- 边是动态生成的（试探 → 闭环验证 → 固化/丢弃）
-- 闭环检测：从当前节点沿 confirmed 边走 N 步，能否回到安全节点
-- 置信度随观察次数增长
+Core mechanisms:
+- Edges grow dynamically (tentative -> closure verification -> solidify/reject)
+- Closure detection: DFS from current node, can we reach any safe node within delta(C) steps?
+- delta(C): adaptive closure tolerance - sparse network -> deep search (exploratory),
+  dense network -> shallow search (conservative)
+- Confidence grows with observation count
 """
 
 from __future__ import annotations
 
-import json
+import math
 import uuid
 from dataclasses import dataclass, field
 from typing import Optional
@@ -20,9 +22,9 @@ from typing import Optional
 @dataclass
 class Node:
     name: str
-    lo: float  # 数量下界
-    hi: float  # 数量上界
-    is_safe: bool = False  # 已知安全节点
+    lo: float
+    hi: float
+    is_safe: bool = False
 
     def contains(self, value: float) -> bool:
         return self.lo <= value <= self.hi
@@ -45,11 +47,17 @@ class Edge:
 class SmallWeb:
     nodes: dict[str, Node] = field(default_factory=dict)
     edges: dict[str, Edge] = field(default_factory=dict)
-    max_depth: int = 5
-    confirm_threshold: int = 3  # 多少次成功观察后确认
+    max_depth: int = 10
+    confirm_threshold: int = 3
+
+    # delta(C) parameters
+    _alpha: float = 5.0
+    _epsilon: float = 0.1
+    _M0: float = 10.0
+    _N_closed: int = 0
+    _N_trials: int = 0
 
     def __post_init__(self):
-        # 预设初始状态节点（range 是示例值，会在运行中被调整）
         if not self.nodes:
             self.nodes = {
                 "critical_low": Node("critical_low", 0, 150, is_safe=False),
@@ -58,18 +66,50 @@ class SmallWeb:
                 "abundant": Node("abundant", 600, 1000, is_safe=True),
             }
 
-    # ---- 节点操作 ----
+    # ---- delta(C): adaptive closure tolerance ----
+
+    def compute_delta(self) -> float:
+        """Adaptive closure tolerance -> dynamic search depth.
+
+        Young/sparse network -> high delta -> deep search (exploratory)
+        Mature/dense network -> low delta -> shallow search (conservative)
+
+        delta(C) = alpha / (rho_adj + epsilon) * log(1 + N_closed / N_trials)
+
+        rho_adj = (|E|/|V|) * min(1, total_obs/M0) + epsilon
+        """
+        total_obs = sum(e.observation_count for e in self.edges.values())
+
+        # Insufficient data -> use max depth (full exploration)
+        if total_obs < 3:
+            return float(self.max_depth)
+
+        # rho(C): edge density = |E| / |V|
+        n_nodes = max(1, len(self.nodes))
+        rho = len(self.edges) / n_nodes
+
+        # M(C)/M0: observation sufficiency calibration
+        M_ratio = min(1.0, total_obs / self._M0)
+        rho_adj = rho * M_ratio + self._epsilon
+
+        # Historical closure success rate
+        attempts = max(1, self._N_trials)
+        success_term = math.log(1 + self._N_closed / attempts)
+
+        delta = (self._alpha / rho_adj) * success_term
+
+        # Clamp to [2, max_depth]
+        return max(2.0, min(float(self.max_depth), delta))
+
+    # ---- node operations ----
 
     def find_node(self, population: float) -> Node:
         for node in self.nodes.values():
             if node.contains(population):
                 return node
-        # 扩展边界
         return self._create_node_for(population)
 
     def _create_node_for(self, population: float) -> Node:
-        """为新出现的种群数量动态创建节点。"""
-        existing = sorted([(n.lo, n.hi) for n in self.nodes.values()])
         lo = max(0, population * 0.8)
         hi = population * 1.2
         name = f"zone_{int(population)}"
@@ -77,7 +117,7 @@ class SmallWeb:
         self.nodes[name] = node
         return node
 
-    # ---- 边操作 ----
+    # ---- edge operations ----
 
     def get_or_create_edge(
         self, from_name: str, action: str, to_name: str
@@ -105,13 +145,15 @@ class SmallWeb:
         elif edge.observation_count >= self.confirm_threshold * 2 and edge.probability < 0.3:
             edge.status = "rejected"
 
-    # ---- 闭环检测 ----
+    # ---- closure detection ----
 
     def detect_closure(self, start_name: str) -> Optional[list[str]]:
-        """从 start_node 出发 DFS，检查能否回到任意 is_safe 节点。"""
+        """DFS from start_node using delta(C) as dynamic depth limit."""
+        depth_limit = int(self.compute_delta())
+        self._N_trials += 1
 
         def dfs(current: str, depth: int, visited: set[str]) -> Optional[list[str]]:
-            if depth > self.max_depth:
+            if depth > depth_limit:
                 return None
             current_node = self.nodes.get(current)
             if current_node and current_node.is_safe and depth > 0:
@@ -127,10 +169,12 @@ class SmallWeb:
                         return [current] + result
             return None
 
-        return dfs(start_name, 0, set())
+        result = dfs(start_name, 0, set())
+        if result is not None:
+            self._N_closed += 1
+        return result
 
     def solidify_path(self, path: list[str]):
-        """将闭环路径上的 tentative 边固化为 confirmed。"""
         for i in range(len(path) - 1):
             for edge in self.edges.values():
                 if (
@@ -140,15 +184,13 @@ class SmallWeb:
                 ):
                     edge.status = "confirmed"
 
-    # ---- 推演 ----
+    # ---- reasoning ----
 
     def reason(self, population: int, actions: list[str]) -> dict:
-        """给定当前状态和候选行动，预测每条行动的结果。"""
         current = self.find_node(float(population))
         results = []
 
         for action in actions:
-            # 找到或创建边
             candidates = [
                 e
                 for e in self.edges.values()
@@ -156,7 +198,6 @@ class SmallWeb:
             ]
             if candidates:
                 edge = max(candidates, key=lambda e: e.confidence)
-                to_node = self.nodes.get(edge.to_node)
                 results.append(
                     {
                         "action": action,
@@ -168,7 +209,6 @@ class SmallWeb:
                     }
                 )
             else:
-                # 试探性预测：假设行动会按比例改变状态
                 ratio = self._action_ratio(action)
                 predicted_pop = population * (1 + ratio)
                 to_node = self.find_node(predicted_pop)
@@ -184,12 +224,10 @@ class SmallWeb:
                     }
                 )
 
-        # 为每条路径检测闭环
         for r in results:
             closure = self.detect_closure(r["predicted_to"])
             r["closure_path"] = closure
             r["can_close"] = closure is not None
-            # 计算风险
             to_node = self.nodes.get(r["predicted_to"])
             r["risk"] = 0.0 if (to_node and to_node.is_safe) else 0.5
             if not r["can_close"]:
@@ -198,13 +236,13 @@ class SmallWeb:
         return {
             "current_node": current.name,
             "current_is_safe": current.is_safe,
+            "delta": self.compute_delta(),
             "candidates": sorted(
                 results, key=lambda r: (r["risk"], -r["confidence"])
             ),
         }
 
     def _action_ratio(self, action: str) -> float:
-        """行动对种群数量的近似影响比例。"""
         ratios = {
             "none": 0.15,
             "light": 0.05,
@@ -213,11 +251,14 @@ class SmallWeb:
         }
         return ratios.get(action, -0.05)
 
-    # ---- 序列化 ----
+    # ---- serialization ----
 
     def snapshot(self) -> dict:
         return {
-            "nodes": {k: {"lo": v.lo, "hi": v.hi, "is_safe": v.is_safe} for k, v in self.nodes.items()},
+            "nodes": {
+                k: {"lo": v.lo, "hi": v.hi, "is_safe": v.is_safe}
+                for k, v in self.nodes.items()
+            },
             "edges": {
                 k: {
                     "from": v.from_node,
