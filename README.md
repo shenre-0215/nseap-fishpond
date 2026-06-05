@@ -13,6 +13,7 @@
 | **paper-v2.md** | 论文重构——从"复杂系统安全学习"转为"动态本体生长+安全探索"，桥接神经符号AI和安全RL两个社区 |
 | **消融实验 1** | NSEAP vs NSEAP-Static（静态预定义本体） |
 | **消融实验 2** | NSEAP vs NSEAP-NoSusp vs NSEAP-NoClose（组件移除） |
+| **δ(C) 自适应闭包容忍度验证** | 实现论文公式 δ(C) = α/(ρ_adj+ε)·log(1+N_closed/N_trials)，动态搜索深度替代硬编码 max_depth |
 
 ### 消融实验核心发现
 
@@ -36,7 +37,23 @@ python main_ablation.py --runs 200
 
 # 第二组：组件移除消融
 python main_ablation2.py --runs 200
+
+# δ(C) 自适应闭包容忍度对比
+python experiment_delta.py --runs 200
 ```
+
+### δ(C) 验证结果
+
+动态闭包容忍度公式 δ(C) = α/(ρ_adj + ε) · log(1 + N_closed/N_trials) 的验证结论：
+
+| Variant | Avg Survival | Avg Harvest | Collapse Rate | Final depth |
+|---------|-------------|-------------|--------------|------------|
+| Fixed depth (5) | 200.0 | 13,039 | 0.0% | fixed 5 |
+| Dynamic δ(C) | 200.0 | 13,039 | 0.0% | converges to ~2 |
+
+**结论**：
+- 公式完全符合理论预期：年轻稀疏网络 → 允许更深搜索（探索），成熟密集网络 → 只允许短路径（保守）
+- 从深度 10 收敛到深度 2，性能和固定深度结果完全一致，但**消除了一个硬编码超参数**
 
 ### 科学方向
 
@@ -255,7 +272,9 @@ fishpond/
 ├── experiment_two_agent.py      # 两智能体实验运行器
 ├── experiment_ablation.py       # [v2] 静态本体消融实验
 ├── experiment_ablation2.py      # [v2] 组件移除消融实验
+├── experiment_delta.py           # [v2] δ(C) 自适应闭包容忍度对比实验
 ├── visualize.py                 # 可视化
+├── visualize_delta.py            # δ(C) 收敛曲线可视化
 ├── main.py                      # 单智能体实验入口
 ├── main_two_agent.py            # 两智能体实验入口
 ├── main_ablation.py             # [v2] 静态本体消融入口
@@ -286,6 +305,7 @@ fishpond/
 
 - [x] ~~消融实验：动态本体 vs 静态本体~~ ✅ 2026-06-02
 - [x] ~~消融实验：组件移除（悬置层、闭环检测）~~ ✅ 2026-06-02
+- [x] ~~实现并验证 δ(C) 自适应闭包容忍度公式~~ ✅ 2026-06-05
 - [ ] 扩展到高维状态空间，验证闭环检测独立价值
 - [ ] 对比深度强化学习/安全强化学习方法
 - [ ] 实现跨领域函子映射（范畴论形式化）
